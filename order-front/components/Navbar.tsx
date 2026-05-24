@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { MStripe } from "./MStripe";
 import { useTheme } from "./ThemeProvider";
 
@@ -8,14 +10,20 @@ interface NavbarProps {
   onCartOpen: () => void;
 }
 
+const NAV_ITEMS = [
+  { label: "Shop", href: "/" },
+  { label: "History", href: "/history" },
+];
+
 export function Navbar({ cartCount, onCartOpen }: NavbarProps) {
   const { theme, toggle } = useTheme();
+  const pathname = usePathname();
   return (
     <header className="sticky top-0 z-30">
       <nav className="bg-canvas border-b border-hairline flex items-center justify-between px-6 md:px-10 h-16">
         {/* Logo */}
         <div className="flex items-center gap-8">
-          <a
+          <Link
             href="/"
             className="flex items-center gap-2 select-none"
             aria-label="M Shop home"
@@ -29,18 +37,22 @@ export function Navbar({ cartCount, onCartOpen }: NavbarProps) {
             <span className="text-muted text-xs tracking-[0.25em] uppercase hidden sm:block">
               Performance
             </span>
-          </a>
+          </Link>
 
           {/* Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            {["Shop", "Parts", "Lifestyle", "About"].map((label) => (
-              <a
+            {NAV_ITEMS.map(({ label, href }) => (
+              <Link
                 key={label}
-                href="#"
-                className="text-body hover:text-on-dark text-xs tracking-[0.15em] uppercase transition-colors"
+                href={href}
+                className={`text-xs tracking-[0.15em] uppercase transition-colors ${
+                  pathname === href
+                    ? "text-on-dark font-bold"
+                    : "text-body hover:text-on-dark"
+                }`}
               >
                 {label}
-              </a>
+              </Link>
             ))}
           </div>
         </div>

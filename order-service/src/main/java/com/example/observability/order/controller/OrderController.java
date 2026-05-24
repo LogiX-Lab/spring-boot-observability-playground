@@ -1,9 +1,12 @@
 package com.example.observability.order.controller;
 
 import com.example.observability.order.model.dto.Order;
+import com.example.observability.order.model.dto.OrderHistoryDto;
 import com.example.observability.order.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/order")
@@ -25,5 +28,11 @@ public class OrderController {
     public ResponseEntity<String> updateOrder(@RequestBody Order order) {
         orderService.updateOrder(order);
         return ResponseEntity.ok("Order has been updated");
+    }
+
+    @GetMapping
+    public ResponseEntity<List<OrderHistoryDto>> getOrders(
+            @RequestParam(required = false) Long customerId) {
+        return ResponseEntity.ok(orderService.getOrders(customerId));
     }
 }

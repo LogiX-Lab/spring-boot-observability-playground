@@ -24,3 +24,13 @@ export interface CartItem {
   product: Product;
   quantity: number;
 }
+
+export interface OrderHistoryItem {
+  id: number;
+  customerId: number;
+  status: string;
+  totalAmount: number;
+  createdAt: string;
+  updatedAt: string;
+  items: { productId: number; quantity: number; price: number }[];
+}
