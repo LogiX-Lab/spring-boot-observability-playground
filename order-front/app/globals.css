@@ -1,37 +1,41 @@
 @import "tailwindcss";
 
+/* ─── Tailwind color tokens (dark-theme defaults) ─────────────── */
 @theme {
-  /* BMW M Canvas & Surfaces */
   --color-canvas: #000000;
   --color-surface-card: #1a1a1a;
   --color-surface-soft: #0d0d0d;
   --color-surface-elevated: #262626;
   --color-carbon: #2b2b2b;
   --color-hairline: #3c3c3c;
-
-  /* Text */
   --color-on-dark: #ffffff;
   --color-body: #bbbbbb;
   --color-body-strong: #e6e6e6;
   --color-muted: #7e7e7e;
 
-  /* BMW M Tricolor */
+  /* BMW M Tricolor — same in both themes */
   --color-m-blue-light: #0066b1;
   --color-m-blue-dark: #1c69d4;
   --color-m-red: #e22718;
 
-  /* States */
   --color-success: #0fa336;
   --color-warning: #f4b400;
 
-  /* Typography */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-html,
-body {
-  background-color: #000000;
-  color: #bbbbbb;
+/* ─── Light theme overrides ──────────────────────────────────── */
+[data-theme="light"] {
+  --color-canvas: #f2f2f2;
+  --color-surface-card: #ffffff;
+  --color-surface-soft: #e8e8e8;
+  --color-surface-elevated: #dedede;
+  --color-carbon: #cccccc;
+  --color-hairline: #d0d0d0;
+  --color-on-dark: #111111;
+  --color-body: #555555;
+  --color-body-strong: #1a1a1a;
+  --color-muted: #909090;
 }
 
 * {

@@ -1,6 +1,7 @@
 "use client";
 
 import { MStripe } from "./MStripe";
+import { useTheme } from "./ThemeProvider";
 
 interface NavbarProps {
   cartCount: number;
@@ -8,6 +9,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ cartCount, onCartOpen }: NavbarProps) {
+  const { theme, toggle } = useTheme();
   return (
     <header className="sticky top-0 z-30">
       <nav className="bg-canvas border-b border-hairline flex items-center justify-between px-6 md:px-10 h-16">
@@ -43,12 +45,23 @@ export function Navbar({ cartCount, onCartOpen }: NavbarProps) {
           </div>
         </div>
 
-        {/* Cart */}
-        <button
-          onClick={onCartOpen}
-          className="relative w-11 h-11 rounded-full border border-hairline flex items-center justify-center hover:border-on-dark transition-colors"
-          aria-label={`Open cart${cartCount > 0 ? `, ${cartCount} items` : ""}`}
-        >
+        {/* Right controls */}
+        <div className="flex items-center gap-2">
+          {/* Theme toggle */}
+          <button
+            onClick={toggle}
+            className="w-11 h-11 rounded-full border border-hairline flex items-center justify-center hover:border-on-dark transition-colors"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+          >
+            {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+          </button>
+
+          {/* Cart */}
+          <button
+            onClick={onCartOpen}
+            className="relative w-11 h-11 rounded-full border border-hairline flex items-center justify-center hover:border-on-dark transition-colors"
+            aria-label={`Open cart${cartCount > 0 ? `, ${cartCount} items` : ""}`}
+          >
           <CartIcon />
           {cartCount > 0 && (
             <span
@@ -58,7 +71,8 @@ export function Navbar({ cartCount, onCartOpen }: NavbarProps) {
               {cartCount > 9 ? "9+" : cartCount}
             </span>
           )}
-        </button>
+          </button>
+        </div>
       </nav>
       <MStripe />
     </header>
@@ -82,6 +96,52 @@ function CartIcon() {
       <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
       <line x1="3" y1="6" x2="21" y2="6" />
       <path d="M16 10a4 4 0 01-8 0" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-on-dark"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-on-dark"
+      aria-hidden="true"
+    >
+      <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
     </svg>
   );
 }
