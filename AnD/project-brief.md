@@ -96,10 +96,13 @@ curl -s -X POST http://localhost:8081/api/v1/order \
     "paymentToken": "tok_demo_123",
     "orderStatus": "PLACED",
     "items": [
-      { "productId": 7, "quantity": 2 }
+      { "productId": 7, "quantity": 2, "price": 29.99 },
+      { "productId": 12, "quantity": 1, "price": 15.00 }
     ]
   }'
 ```
+
+> Payment amount sent to `payment-service` = `(2 × 29.99) + (1 × 15.00)` = **$74.98**
 
 Expected response: `Order has been placed`
 

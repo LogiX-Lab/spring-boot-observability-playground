@@ -1,4 +1,4 @@
 package com.example.observability.order.model.dto;
 
-public record OrderItem(Long productId, Integer quantity) {
+public record OrderItem(Long productId, Integer quantity, double price) {
 }

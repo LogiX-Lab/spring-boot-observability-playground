@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.ThreadLocalRandom;
+
 
 @Service
 @Slf4j
@@ -32,8 +32,10 @@ public class OrderProcessingService {
         }
     }
 
-    private OrderPayment getOrderPayment(Order order){
-        double amount = ThreadLocalRandom.current().nextDouble(10, 120);
-        return new OrderPayment(order.id(),order.paymentToken(), amount);
+    private OrderPayment getOrderPayment(Order order) {
+        double amount = order.items().stream()
+                .mapToDouble(item -> item.quantity() * item.price())
+                .sum();
+        return new OrderPayment(order.id(), order.paymentToken(), amount);
     }
 }
