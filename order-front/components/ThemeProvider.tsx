@@ -19,21 +19,29 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
 
   // Sync from localStorage on mount (avoids SSR mismatch)
   useEffect(() => {
-    const stored = localStorage.getItem("m-theme") as Theme | null;
-    const initial: Theme = stored === "light" ? "light" : "dark";
+    const stored = localStorage.getItem("kofi-theme") as Theme | null;
+    const initial: Theme = stored === "dark" ? "dark" : "light";
     setTheme(initial);
-    document.documentElement.setAttribute("data-theme", initial);
+    if (initial === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
   }, []);
 
   function toggle() {
     const next: Theme = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("m-theme", next);
+    if (next === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+    localStorage.setItem("kofi-theme", next);
   }
 
   return (

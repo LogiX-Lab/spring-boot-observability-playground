@@ -220,7 +220,7 @@ export function Cart({
                       value={customerId}
                       onChange={(e) => setCustomerId(e.target.value)}
                       placeholder="e.g. 1001"
-                      className="w-full h-12 bg-surface-card border border-hairline text-body-strong text-sm font-light px-3 focus:border-on-dark focus:outline-none transition-colors placeholder:text-muted"
+                      className="w-full h-12 bg-surface-card border border-hairline text-body-strong text-sm font-light px-4 rounded-xl focus:border-accent focus:outline-none transition-colors placeholder:text-muted"
                     />
                   </div>
 
@@ -238,7 +238,7 @@ export function Cart({
                       value={paymentToken}
                       onChange={(e) => setPaymentToken(e.target.value)}
                       placeholder="tok_..."
-                      className="w-full h-12 bg-surface-card border border-hairline text-body-strong text-sm font-light px-3 focus:border-on-dark focus:outline-none transition-colors placeholder:text-muted"
+                      className="w-full h-12 bg-surface-card border border-hairline text-body-strong text-sm font-light px-4 rounded-xl focus:border-accent focus:outline-none transition-colors placeholder:text-muted"
                     />
                   </div>
 
@@ -263,7 +263,7 @@ export function Cart({
               type="submit"
               form={formId}
               disabled={submitState === "loading"}
-              className="w-full h-12 border border-on-dark text-on-dark text-[10px] tracking-[0.25em] uppercase font-bold hover:bg-on-dark hover:text-canvas transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full h-12 bg-accent text-white text-[10px] tracking-[0.25em] uppercase font-bold rounded-full hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {submitState === "loading" ? "PLACING ORDER…" : "PLACE ORDER"}
             </button>

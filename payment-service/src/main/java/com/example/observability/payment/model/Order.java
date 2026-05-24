@@ -1,4 +1,4 @@
 package com.example.observability.payment.model;
 
-public record Order(Long id, OrderStatus status) {
+public record Order(Long id, OrderStatus orderStatus) {
 }

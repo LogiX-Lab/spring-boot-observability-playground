@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spring Boot Observability Playground — Demo</title>
+<style>
+  /* ── Reset & base ─────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f4f8;
+    color: #1e293b;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Slide deck ───────────────────────────────────────────────────── */
+  .deck {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 48px 64px 32px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+    background: #f0f4f8;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ── Typography ───────────────────────────────────────────────────── */
+  .slide-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #4f46e5;
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.15;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #0369a1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: 16px;
+    color: #475569;
+    margin-bottom: 36px;
+  }
+
+  /* ── Navigation bar ───────────────────────────────────────────────── */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 24px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+  }
+  .nav button {
+    background: #e8edf5;
+    color: #1e293b;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .nav button:hover { background: #d1daf0; }
+  .nav button:disabled { opacity: 0.3; cursor: default; }
+  .nav .counter {
+    font-size: 13px;
+    color: #64748b;
+    min-width: 70px;
+    text-align: center;
+  }
+  .dot-row {
+    display: flex;
+    gap: 6px;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .dot.active { background: #4f46e5; }
+
+  /* ── Cards & layout helpers ───────────────────────────────────────── */
+  .row { display: flex; gap: 20px; flex: 1; }
+  .col { display: flex; flex-direction: column; flex: 1; gap: 16px; }
+  .card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .card h3 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    color: #4f46e5;
+  }
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .pill-blue  { background: #dbeafe; color: #1d4ed8; }
+  .pill-green { background: #dcfce7; color: #15803d; }
+  .pill-amber { background: #fef3c7; color: #d97706; }
+  .pill-pink  { background: #fce7f3; color: #be185d; }
+  .pill-red   { background: #fee2e2; color: #dc2626; }
+  .pill-purple{ background: #ede9fe; color: #7c3aed; }
+
+  /* ── Code blocks ──────────────────────────────────────────────────── */
+  pre {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow: auto;
+    flex: 1;
+    color: #1e293b;
+  }
+  .kw  { color: #7c3aed; }
+  .str { color: #15803d; }
+  .cmt { color: #94a3b8; font-style: italic; }
+  .ann { color: #be185d; }
+  .num { color: #b45309; }
+  .cls { color: #1d4ed8; }
+  .prop{ color: #0369a1; }
+
+  /* ── SVG architecture diagrams ────────────────────────────────────── */
+  .diagram-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  svg text { font-family: 'Segoe UI', system-ui, sans-serif; }
+
+  /* ── N+1 slide specific ───────────────────────────────────────────── */
+  .query-list { list-style: none; }
+  .query-list li {
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 12px;
+    margin-bottom: 4px;
+    background: #f8fafc;
+    color: #1e293b;
+    border-left: 3px solid;
+  }
+  .query-list li.q1  { border-color: #1d4ed8; }
+  .query-list li.qn  { border-color: #dc2626; }
+  .query-list li.fix { border-color: #15803d; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-right: 6px;
+  }
+  .badge-red   { background: #fee2e2; color: #dc2626; }
+  .badge-green { background: #dcfce7; color: #15803d; }
+
+  /* ── Title slide ──────────────────────────────────────────────────── */
+  .title-slide {
+    justify-content: center;
+    align-items: center;
+    background:
+      radial-gradient(ellipse at 80% 20%, rgba(79,70,229,0.08) 0%, transparent 55%),
+      radial-gradient(ellipse at 10% 80%, rgba(3,105,161,0.07) 0%, transparent 50%),
+      #f0f4f8;
+  }
+  .title-slide h1 { font-size: 52px; margin-bottom: 16px; }
+  .stack-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 28px; }
+
+  /* ── Snippet grid ─────────────────────────────────────────────────── */
+  .snippet-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 14px;
+    flex: 1;
+  }
+  .snippet-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .snippet-card h3 {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .snippet-card pre {
+    flex: 1;
+    margin: 0;
+    font-size: 11px;
+    padding: 10px 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SLIDE 0 — APPLICATION DEMO UI
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="slide active" id="s0">
+    <div class="slide-tag">Demo · Application UI</div>
+    <h2>Application Demo</h2>
+    <p class="subtitle">Live order placement and order history views running on the playground stack</p>
+
+    <div style="display:flex; gap:20px; flex:1; min-height:0;">
+      <div style="flex:1; display:flex; flex-direction:column; gap:10px; min-height:0;">
+        <div style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#4f46e5;">
+          Order Placement
+        </div>
+        <div style="flex:1; min-height:0; display:flex; align-items:center; justify-content:center;">
+          <img
+            src="Demo Order Placement.png"
+            alt="Demo Order Placement UI"
+            style="max-width:100%; max-height:100%; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 4px 16px rgba(0,0,0,0.10); object-fit:contain;"
+          />
+        </div>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; gap:10px; min-height:0;">
+        <div style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#15803d;">
+          Order History
+        </div>
+        <div style="flex:1; min-height:0; display:flex; align-items:center; justify-content:center;">
+          <img
+            src="Order History.png"
+            alt="Order History UI"
+            style="max-width:100%; max-height:100%; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 4px 16px rgba(0,0,0,0.10); object-fit:contain;"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SLIDE 1 — TITLE
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="slide title-slide" id="s1">
+    <div style="display:flex; gap:52px; flex:1; align-items:center;">
+
+      <!-- ── Left: title + pills ─────────────────────────────────────── -->
+      <div style="flex:1.1; display:flex; flex-direction:column; justify-content:center;">
+        <div class="slide-tag">Spring Boot · Next.js · Kafka · PostgreSQL</div>
+        <h1>Spring Boot<br/>Observability<br/>Playground</h1>
+        <p class="subtitle">
+          <span class="pill pill-pink" style="font-size:13px; padding:5px 14px;">Micrometer Tracing</span>
+          &nbsp;+&nbsp;
+          <span class="pill pill-blue" style="font-size:13px; padding:5px 14px;">OpenTelemetry</span>
+          &nbsp;+&nbsp;
+          <span class="pill pill-amber" style="font-size:13px; padding:5px 14px;">Jaeger</span>
+        </p>
+        <div class="stack-pills">
+          <span class="pill pill-blue">Java 25</span>
+          <span class="pill pill-purple">Spring Boot 3.5</span>
+          <span class="pill pill-green">Next.js 16</span>
+          <span class="pill pill-amber">Apache Kafka</span>
+          <span class="pill pill-blue">PostgreSQL 16</span>
+          <span class="pill pill-pink">Micrometer Tracing</span>
+          <span class="pill pill-blue">OpenTelemetry</span>
+          <span class="pill pill-green">Jaeger</span>
+        </div>
+      </div>
+
+      <!-- ── Right: outline box ──────────────────────────────────────── -->
+      <div style="flex:0.9; background:#ffffff; border:1px solid #e2e8f0; border-radius:16px;
+                  padding:28px 30px; box-shadow:0 4px 20px rgba(79,70,229,0.08);">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
+                    color:#4f46e5; margin-bottom:18px;">Agenda</div>
+        <ol style="list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px;">
+
+          <li style="display:flex; gap:14px; align-items:flex-start;">
+            <span style="flex-shrink:0; width:26px; height:26px; border-radius:50%;
+                         background:#dbeafe; color:#1d4ed8; font-size:12px; font-weight:800;
+                         display:flex; align-items:center; justify-content:center;">1</span>
+            <div>
+              <div style="font-size:13px; font-weight:700; color:#0f172a; margin-bottom:3px;">
+                Overall Application Diagram
+              </div>
+              <div style="font-size:11px; color:#64748b; line-height:1.5;">
+                order-front · order-service · Kafka · payment-service · PostgreSQL
+              </div>
+            </div>
+          </li>
+
+          <li style="display:flex; gap:14px; align-items:flex-start;">
+            <span style="flex-shrink:0; width:26px; height:26px; border-radius:50%;
+                         background:#ede9fe; color:#7c3aed; font-size:12px; font-weight:800;
+                         display:flex; align-items:center; justify-content:center;">2</span>
+            <div>
+              <div style="font-size:13px; font-weight:700; color:#0f172a; margin-bottom:3px;">
+                Architecture with Observation
+              </div>
+              <div style="font-size:11px; color:#64748b; line-height:1.5;">
+                Micrometer Tracing + OpenTelemetry + Jaeger
+              </div>
+            </div>
+          </li>
+
+          <li style="display:flex; gap:14px; align-items:flex-start;">
+            <span style="flex-shrink:0; width:26px; height:26px; border-radius:50%;
+                         background:#dcfce7; color:#15803d; font-size:12px; font-weight:800;
+                         display:flex; align-items:center; justify-content:center;">3</span>
+            <div>
+              <div style="font-size:13px; font-weight:700; color:#0f172a; margin-bottom:3px;">
+                Code Snippets
+              </div>
+              <div style="font-size:11px; color:#64748b; line-height:1.5;">
+                Enabling observation across services
+              </div>
+            </div>
+          </li>
+
+          <li style="display:flex; gap:14px; align-items:flex-start;">
+            <span style="flex-shrink:0; width:26px; height:26px; border-radius:50%;
+                         background:#fee2e2; color:#dc2626; font-size:12px; font-weight:800;
+                         display:flex; align-items:center; justify-content:center;">4</span>
+            <div>
+              <div style="font-size:13px; font-weight:700; color:#0f172a; margin-bottom:3px;">
+                Spring Entity N+1 Problem
+              </div>
+              <div style="font-size:11px; color:#64748b; line-height:1.5;">
+                Order ↔ OrderItem — cause, trace evidence &amp; fix
+              </div>
+            </div>
+          </li>
+
+        </ol>
+      </div>
+
+    </div>
+
+    <div style="text-align:center; padding-top:12px; flex-shrink:0;">
+      <div style="font-size:11px; color:#94a3b8; margin-bottom:6px;">
+        The copyright of the original source repository belongs to
+      </div>
+      <div style="display:inline-flex; align-items:center; gap:8px;
+                  background:#ede9fe; border:1px solid #c4b5fd; border-radius:999px;
+                  padding:5px 16px;">
+        <span style="font-size:13px; line-height:1;">©</span>
+        <a href="https://github.com/yashodhah/spring-boot-observability-playground"
+           target="_blank"
+           style="color:#7c3aed; font-weight:700; text-decoration:none; font-size:12px;">yashodhah</a>
+        <span style="color:#a78bfa; font-size:11px;">· spring-boot-observability-playground</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SLIDE 2 — BUSINESS ARCHITECTURE
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s2" style="padding-bottom: 20px;">
+    <div class="slide-tag">Architecture</div>
+    <h2>Application Components</h2>
+    <p class="subtitle" style="margin-bottom: 10px;">Business components and their interactions</p>
+
+    <div class="diagram-wrap" style="flex:1; min-height:0;">
+      <svg width="100%" height="100%" viewBox="0 0 820 360" preserveAspectRatio="xMidYMid meet" style="max-height:100%;">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#60a5fa"/>
+          </marker>
+          <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa"/>
+          </marker>
+          <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#34d399"/>
+          </marker>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- order-front -->
+        <rect x="20" y="130" width="140" height="80" rx="12" fill="#dbeafe" stroke="#3b5bdb" stroke-width="1.5"/>
+        <text x="90" y="162" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="700">order-front</text>
+        <text x="90" y="178" text-anchor="middle" fill="#475569" font-size="10">Next.js 16</text>
+        <text x="90" y="194" text-anchor="middle" fill="#64748b" font-size="9">BFF + React UI</text>
+
+        <!-- order-service -->
+        <rect x="230" y="100" width="150" height="80" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+        <text x="305" y="132" text-anchor="middle" fill="#15803d" font-size="11" font-weight="700">order-service</text>
+        <text x="305" y="148" text-anchor="middle" fill="#475569" font-size="10">Spring Boot :8081</text>
+        <text x="305" y="164" text-anchor="middle" fill="#64748b" font-size="9">REST · Kafka Producer</text>
+
+        <!-- Kafka -->
+        <rect x="430" y="130" width="130" height="80" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+        <text x="495" y="162" text-anchor="middle" fill="#d97706" font-size="11" font-weight="700">Apache Kafka</text>
+        <text x="495" y="178" text-anchor="middle" fill="#475569" font-size="10">:9092</text>
+        <text x="495" y="194" text-anchor="middle" fill="#64748b" font-size="9">order-events topic</text>
+
+        <!-- payment-service -->
+        <rect x="620" y="100" width="160" height="80" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="700" y="132" text-anchor="middle" fill="#7c3aed" font-size="11" font-weight="700">payment-service</text>
+        <text x="700" y="148" text-anchor="middle" fill="#475569" font-size="10">Spring Boot :8082</text>
+        <text x="700" y="164" text-anchor="middle" fill="#64748b" font-size="9">Kafka Consumer · REST</text>
+
+        <!-- PostgreSQL -->
+        <rect x="390" y="270" width="160" height="70" rx="12" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+        <text x="470" y="300" text-anchor="middle" fill="#0369a1" font-size="11" font-weight="700">PostgreSQL 16</text>
+        <text x="470" y="316" text-anchor="middle" fill="#475569" font-size="10">:5432 · observability_db</text>
+        <text x="470" y="328" text-anchor="middle" fill="#64748b" font-size="9">orders · order_items · payment</text>
+
+        <!-- Arrows -->
+        <!-- order-front → order-service (HTTP) -->
+        <line x1="161" y1="170" x2="228" y2="145" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="185" y="148" fill="#1d4ed8" font-size="9" text-anchor="middle">HTTP REST</text>
+
+        <!-- order-service → Kafka -->
+        <line x1="381" y1="155" x2="428" y2="165" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="405" y="150" fill="#d97706" font-size="9" text-anchor="middle">Produce</text>
+
+        <!-- Kafka → payment-service -->
+        <line x1="561" y1="162" x2="618" y2="150" stroke="#d97706" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="592" y="148" fill="#d97706" font-size="9" text-anchor="middle">Consume</text>
+
+        <!-- payment-service → order-service (REST callback) -->
+        <path d="M 700 100 Q 700 60 305 60 L 305 98" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#arr2)"/>
+        <text x="500" y="52" fill="#7c3aed" font-size="9" text-anchor="middle">PUT /api/v1/order  (status update)</text>
+
+        <!-- order-service → PostgreSQL -->
+        <line x1="330" y1="180" x2="420" y2="268" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr3)"/>
+        <text x="358" y="240" fill="#0369a1" font-size="9">JPA</text>
+
+        <!-- payment-service → PostgreSQL -->
+        <line x1="670" y1="180" x2="530" y2="268" stroke="#0369a1" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr3)"/>
+        <text x="625" y="240" fill="#0369a1" font-size="9">JPA</text>
+
+        <!-- legend -->
+        <rect x="20" y="300" width="300" height="50" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+        <line x1="35" y1="317" x2="60" y2="317" stroke="#1d4ed8" stroke-width="1.5"/>
+        <text x="65" y="320" fill="#475569" font-size="9">HTTP REST</text>
+        <line x1="120" y1="317" x2="145" y2="317" stroke="#d97706" stroke-width="1.5"/>
+        <text x="150" y="320" fill="#475569" font-size="9">Kafka</text>
+        <line x1="185" y1="317" x2="210" y2="317" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="215" y="320" fill="#475569" font-size="9">REST callback</text>
+        <line x1="35" y1="337" x2="60" y2="337" stroke="#0369a1" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="65" y="340" fill="#475569" font-size="9">JPA / JDBC</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SLIDE 3 — ARCHITECTURE + OBSERVATION
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s3" style="padding-bottom: 20px;">
+    <div class="slide-tag">Observability</div>
+    <h2>Architecture + OpenTelemetry Observation</h2>
+    <p class="subtitle" style="margin-bottom: 10px;">Micrometer Tracing bridge · OTLP export · Jaeger trace repository</p>
+
+    <div class="diagram-wrap" style="flex:1; min-height:0;">
+      <svg width="100%" height="100%" viewBox="0 0 860 390" preserveAspectRatio="xMidYMid meet" style="max-height:100%;">
+        <defs>
+          <!-- grey arrow — for original component connections -->
+          <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8"/>
+          </marker>
+          <!-- red arrow — OTLP to Jaeger -->
+          <marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#dc2626"/>
+          </marker>
+          <!-- green arrow — REST callback from observation layer -->
+          <marker id="a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#34d399"/>
+          </marker>
+        </defs>
+
+        <!-- ── Background lanes (grey — structural containers) ── -->
+        <rect x="10"  y="90" width="155" height="180" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,2"/>
+        <text x="87"  y="108" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">NODE.JS PROCESS</text>
+
+        <rect x="210" y="90" width="165" height="180" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,2"/>
+        <text x="292" y="108" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">JVM PROCESS</text>
+
+        <rect x="600" y="90" width="185" height="180" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,2"/>
+        <text x="692" y="108" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">JVM PROCESS</text>
+
+        <!-- ══ ORIGINAL COMPONENTS (greyed) ══ -->
+
+        <!-- order-front -->
+        <rect x="22"  y="115" width="140" height="65" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="92"  y="137" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">order-front</text>
+        <text x="92"  y="152" text-anchor="middle" fill="#94a3b8" font-size="9">Next.js · BFF API</text>
+        <text x="92"  y="164" text-anchor="middle" fill="#94a3b8" font-size="9">React UI</text>
+
+        <!-- order-service -->
+        <rect x="222" y="115" width="148" height="65" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="296" y="137" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">order-service</text>
+        <text x="296" y="152" text-anchor="middle" fill="#94a3b8" font-size="9">Spring MVC · KafkaTemplate</text>
+        <text x="296" y="164" text-anchor="middle" fill="#94a3b8" font-size="9">JPA · PostgreSQL</text>
+
+        <!-- Kafka -->
+        <rect x="415" y="135" width="130" height="55" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="480" y="158" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">Apache Kafka</text>
+        <text x="480" y="174" text-anchor="middle" fill="#94a3b8" font-size="9">order-events topic</text>
+
+        <!-- payment-service -->
+        <rect x="612" y="115" width="162" height="65" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="693" y="137" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">payment-service</text>
+        <text x="693" y="152" text-anchor="middle" fill="#94a3b8" font-size="9">KafkaListener · RestTemplate</text>
+        <text x="693" y="164" text-anchor="middle" fill="#94a3b8" font-size="9">JPA · PostgreSQL</text>
+
+        <!-- PostgreSQL -->
+        <rect x="310" y="295" width="150" height="55" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="385" y="318" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">PostgreSQL</text>
+        <text x="385" y="334" text-anchor="middle" fill="#94a3b8" font-size="9">observability_db</text>
+
+        <!-- ── Original business arrows (grey) ── -->
+        <line x1="162" y1="147" x2="220" y2="145" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ag)"/>
+        <text x="191" y="141" text-anchor="middle" fill="#94a3b8" font-size="8">HTTP</text>
+
+        <line x1="370" y1="153" x2="413" y2="158" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ag)"/>
+        <text x="391" y="148" text-anchor="middle" fill="#94a3b8" font-size="8">Produce</text>
+
+        <line x1="545" y1="158" x2="610" y2="152" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ag)"/>
+        <text x="577" y="148" text-anchor="middle" fill="#94a3b8" font-size="8">Consume</text>
+
+        <!-- REST callback (grey) -->
+        <path d="M 693 115 Q 693 85 296 85 L 296 113" stroke="#94a3b8" stroke-width="1.2" fill="none" stroke-dasharray="4,3" marker-end="url(#ag)"/>
+        <text x="490" y="80" fill="#94a3b8" font-size="8" text-anchor="middle">PUT /api/v1/order</text>
+
+        <!-- JDBC (grey) -->
+        <line x1="310" y1="175" x2="340" y2="293" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3,2" marker-end="url(#ag)"/>
+        <line x1="660" y1="180" x2="460" y2="293" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3,2" marker-end="url(#ag)"/>
+
+        <!-- ══ OBSERVATION LAYER (highlighted) ══ -->
+
+        <!-- OTel NodeSDK — order-front -->
+        <rect x="22"  y="198" width="140" height="28" rx="6" fill="#dbeafe" stroke="#3b5bdb" stroke-width="1.5"/>
+        <text x="92"  y="216" text-anchor="middle" fill="#1d4ed8" font-size="9" font-weight="700">OTel NodeSDK</text>
+
+        <!-- Micrometer → OTel Bridge — order-service -->
+        <rect x="222" y="198" width="148" height="28" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+        <text x="296" y="216" text-anchor="middle" fill="#15803d" font-size="9" font-weight="700">Micrometer → OTel Bridge</text>
+
+        <!-- Micrometer → OTel Bridge — payment-service -->
+        <rect x="612" y="198" width="162" height="28" rx="6" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="693" y="216" text-anchor="middle" fill="#7c3aed" font-size="9" font-weight="700">Micrometer → OTel Bridge</text>
+
+        <!-- Jaeger -->
+        <rect x="355" y="15" width="140" height="55" rx="10" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+        <text x="425" y="39"  text-anchor="middle" fill="#c2410c" font-size="13" font-weight="800">Jaeger</text>
+        <text x="425" y="56"  text-anchor="middle" fill="#475569" font-size="9">:4318 OTLP · :16686 UI</text>
+
+        <!-- OTLP arrows → Jaeger (coloured — observation telemetry) -->
+        <path d="M 92 198 Q 92 40 353 40"   stroke="#dc2626" stroke-width="1.5" fill="none" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+        <path d="M 296 198 L 296 40 L 353 40" stroke="#dc2626" stroke-width="1.5" fill="none" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+        <path d="M 693 198 Q 693 40 497 40"  stroke="#dc2626" stroke-width="1.5" fill="none" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+        <text x="155" y="25" fill="#dc2626" font-size="8">OTLP HTTP /v1/traces</text>
+        <text x="530" y="25" fill="#dc2626" font-size="8">OTLP HTTP /v1/traces</text>
+
+        <!-- legend -->
+        <rect x="10" y="355" width="840" height="28" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+        <line x1="25"  y1="369" x2="50"  y2="369" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="55"  y="372" fill="#475569" font-size="8">HTTP / Kafka / JDBC (original)</text>
+        <line x1="230" y1="369" x2="255" y2="369" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="260" y="372" fill="#475569" font-size="8">OTLP traces → Jaeger (observation)</text>
+        <rect x="480" y="362" width="10" height="10" rx="2" fill="#dbeafe" stroke="#3b5bdb" stroke-width="1"/>
+        <text x="495" y="372" fill="#475569" font-size="8">OTel SDK / Micrometer Bridge</text>
+        <rect x="670" y="362" width="10" height="10" rx="2" fill="#fff7ed" stroke="#ea580c" stroke-width="1"/>
+        <text x="685" y="372" fill="#475569" font-size="8">Jaeger</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SLIDE 4 — CODE SNIPPETS
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s4">
+    <div class="slide-tag">Implementation</div>
+    <h2>Enabling Observation — Code Snippets</h2>
+    <p class="subtitle">How each component is wired to emit traces</p>
+
+    <div class="snippet-grid">
+
+      <!-- order-front -->
+      <div class="snippet-card">
+        <h3 style="color:#1d4ed8;">order-front &nbsp;<span class="pill pill-blue">Next.js Node.js</span></h3>
+        <pre><span class="cmt">// instrumentation.node.ts</span>
+<span class="kw">import</span> { <span class="cls">NodeSDK</span> } <span class="kw">from</span> <span class="str">"@opentelemetry/sdk-node"</span>;
+<span class="kw">import</span> { <span class="cls">OTLPTraceExporter</span> } <span class="kw">from</span> <span class="str">"@opentelemetry/exporter-trace-otlp-http"</span>;
+<span class="kw">import</span> { <span class="cls">HttpInstrumentation</span> } <span class="kw">from</span> <span class="str">"@opentelemetry/instrumentation-http"</span>;
+<span class="kw">import</span> { <span class="cls">UndiciInstrumentation</span> } <span class="kw">from</span> <span class="str">"@opentelemetry/instrumentation-undici"</span>;
+
+process.env.<span class="prop">OTEL_SERVICE_NAME</span> ??= <span class="str">"order-front"</span>;
+
+<span class="kw">const</span> sdk = <span class="kw">new</span> <span class="cls">NodeSDK</span>({
+  traceExporter: <span class="kw">new</span> <span class="cls">OTLPTraceExporter</span>({ url: <span class="str">"http://localhost:4318/v1/traces"</span> }),
+  instrumentations: [
+    <span class="kw">new</span> <span class="cls">HttpInstrumentation</span>(),   <span class="cmt">// inbound HTTP spans</span>
+    <span class="kw">new</span> <span class="cls">UndiciInstrumentation</span>(), <span class="cmt">// outgoing fetch() → order-service</span>
+  ],
+});
+sdk.start();</pre>
+      </div>
+
+      <!-- order-service -->
+      <div class="snippet-card">
+        <h3 style="color:#15803d;">order-service &nbsp;<span class="pill pill-green">Spring Boot</span></h3>
+        <pre><span class="cmt">&lt;!-- pom.xml: three deps wire the whole pipeline --&gt;</span>
+&lt;<span class="cls">dependency</span>&gt;spring-boot-starter-actuator&lt;/<span class="cls">dependency</span>&gt;
+&lt;<span class="cls">dependency</span>&gt;micrometer-tracing-bridge-otel&lt;/<span class="cls">dependency</span>&gt;
+&lt;<span class="cls">dependency</span>&gt;opentelemetry-exporter-otlp&lt;/<span class="cls">dependency</span>&gt;
+&lt;<span class="cls">dependency</span>&gt;datasource-micrometer-spring-boot&lt;/<span class="cls">dependency</span>&gt;
+
+<span class="cmt"># application.properties</span>
+<span class="prop">management.tracing.sampling.probability</span>=<span class="num">1.0</span>
+<span class="prop">management.otlp.tracing.endpoint</span>=<span class="str">http://localhost:4318/v1/traces</span>
+
+<span class="cmt"># Kafka producer spans + traceparent injection</span>
+<span class="prop">spring.kafka.template.observationEnabled</span>=<span class="num">true</span>
+
+<span class="cmt"># JDBC query spans (ProxyDataSource auto-config)</span>
+<span class="prop">datasource.proxy.query.enable-logging</span>=<span class="num">true</span></pre>
+      </div>
+
+      <!-- payment-service -->
+      <div class="snippet-card">
+        <h3 style="color:#7c3aed;">payment-service &nbsp;<span class="pill pill-purple">Spring Boot</span></h3>
+        <pre><span class="cmt"># application.properties</span>
+<span class="prop">spring.kafka.listener.observationEnabled</span>=<span class="num">true</span>
+
+<span class="cmt">// PaymentService.java — custom named span via @Observed</span>
+<span class="ann">@Observed</span>(name = <span class="str">"payment:processPayment"</span>)
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="cls">processPayment</span>(<span class="cls">OrderPayment</span> orderPayment) {
+    <span class="cmt">// validate → authorize → capture</span>
+    savePayment(orderPayment, <span class="cls">PaymentStatus</span>.COMPLETED);
+}
+
+<span class="cmt">// Requires in pom.xml:</span>
+<span class="cmt">// spring-boot-starter-aop  (AOP proxy for @Observed)</span>
+<span class="cmt">// micrometer-observation    (Observation API)</span></pre>
+      </div>
+
+      <!-- Jaeger result -->
+      <div class="snippet-card">
+        <h3 style="color:#c2410c;">Resulting Trace in Jaeger &nbsp;<span class="pill pill-amber">Full span tree</span></h3>
+        <pre><span class="cmt">POST /api/orders            [order-front]     ~50ms</span>
+  <span class="str">└─ POST http://:8081/...   [order-front]      ~45ms</span>  <span class="cmt">← undici</span>
+       <span class="str">└─ POST /api/v1/order  [order-service]    ~40ms</span>  <span class="cmt">← Spring MVC</span>
+            <span class="str">├─ query INSERT orders  [order-service]   ~3ms</span>   <span class="cmt">← JDBC</span>
+            <span class="str">├─ query INSERT items   [order-service]   ~2ms</span>   <span class="cmt">← JDBC</span>
+            <span class="str">└─ order-events send    [order-service]   ~1ms</span>   <span class="cmt">← Kafka</span>
+                 <span class="str">└─ order-events receive [payment-service] ~2100ms</span>
+                      <span class="str">├─ payment:processPayment           ~2000ms</span>  <span class="cmt">← @Observed</span>
+                      <span class="str">│    └─ query INSERT payment           ~3ms</span>  <span class="cmt">← JDBC</span>
+                      <span class="str">└─ PUT http://:8081/...               ~12ms</span>  <span class="cmt">← RestTemplate</span>
+                           <span class="str">└─ PUT /api/v1/order [order-service]  ~8ms</span>
+                                <span class="str">└─ query UPDATE orders              ~2ms</span></pre>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SLIDE 5 — TRACE SCREENSHOT: OBSERVATION N+1 PROBLEM
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s5">
+    <div class="slide-tag">Observability · Trace UI</div>
+    <h2>Observation N+1 Problem</h2>
+    <p class="subtitle">Jaeger trace showing repeated JDBC spans caused by FetchType.EAGER on OrderItem</p>
+
+    <div class="diagram-wrap" style="align-items:flex-start; padding-top:8px;">
+      <img
+        src="Obervation N+1 Problem.png"
+        alt="Jaeger trace screenshot — N+1 JDBC spans on order_items"
+        style="max-width:100%; max-height:100%; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 4px 16px rgba(0,0,0,0.08); object-fit:contain;"
+      />
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SLIDE 6 — N+1 PROBLEM
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s6">
+    <div class="slide-tag">JPA Performance</div>
+    <h2>Spring Entity N+1 Problem</h2>
+    <p class="subtitle">Order ↔ OrderItem — as found in this project</p>
+
+    <div class="row" style="flex:1; gap:20px;">
+
+      <!-- Left: the problem -->
+      <div class="col" style="flex:1.1;">
+        <div class="card" style="flex:0 0 auto;">
+          <h3>The Root Cause — <code style="color:#dc2626">FetchType.EAGER</code></h3>
+          <pre style="flex:none; margin:0; font-size:11px;"><span class="cmt">// OrderEntity.java — line 41</span>
+<span class="ann">@OneToMany</span>(mappedBy = <span class="str">"order"</span>,
+           cascade = <span class="cls">CascadeType</span>.ALL,
+           fetch = <span class="cls">FetchType</span>.<span class="str">EAGER</span>)  <span class="cmt">← triggers N+1</span>
+<span class="kw">private</span> <span class="cls">List</span>&lt;<span class="cls">OrderItemEntity</span>&gt; items = <span class="kw">new</span> <span class="cls">ArrayList</span>&lt;&gt;();</pre>
+        </div>
+
+        <div class="card" style="flex:1;">
+          <h3>SQL Emitted for <code style="color:#dc2626">getOrders(customerId)</code></h3>
+          <ul class="query-list">
+            <li class="q1"><span class="badge badge-green">1</span>SELECT * FROM orders WHERE customer_id = ? ORDER BY created_at DESC</li>
+            <li class="qn"><span class="badge badge-red">N</span>SELECT * FROM order_items WHERE order_id = <span style="color:#b45309">1</span></li>
+            <li class="qn"><span class="badge badge-red">N</span>SELECT * FROM order_items WHERE order_id = <span style="color:#b45309">2</span></li>
+            <li class="qn"><span class="badge badge-red">N</span>SELECT * FROM order_items WHERE order_id = <span style="color:#b45309">3</span></li>
+            <li class="qn"><span class="badge badge-red">N</span>SELECT * FROM order_items WHERE order_id = <span style="color:#b45309">…</span></li>
+          </ul>
+          <p style="margin-top:10px; font-size:12px; color:#94a3b8;">
+            With <strong style="color:#f87171">N orders</strong> in the result →
+            <strong style="color:#f87171">N + 1 database round-trips</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: solutions -->
+      <div class="col" style="flex:1.4;">
+        <div class="card" style="flex:1;">
+          <h3>Solutions — Best to Quickest Fix</h3>
+
+          <div style="margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+              <span class="pill pill-green">A — EntityGraph</span>
+              <span style="font-size:11px; color:#94a3b8;">1 JOIN query · cleanest approach</span>
+            </div>
+            <pre style="flex:none; font-size:10.5px; padding:8px 12px;"><span class="cmt">// OrderEntity.java — change EAGER → LAZY</span>
+fetch = <span class="cls">FetchType</span>.LAZY
+
+<span class="cmt">// OrderRepository.java — annotate query methods</span>
+<span class="ann">@EntityGraph</span>(attributePaths = <span class="str">"items"</span>)
+<span class="cls">List</span>&lt;<span class="cls">OrderEntity</span>&gt; findByCustomerIdOrderByCreatedAtDesc(<span class="cls">Long</span> customerId);
+<span class="ann">@EntityGraph</span>(attributePaths = <span class="str">"items"</span>)
+<span class="cls">List</span>&lt;<span class="cls">OrderEntity</span>&gt; findAllByOrderByCreatedAtDesc();</pre>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+              <span class="pill pill-amber">B — @BatchSize</span>
+              <span style="font-size:11px; color:#94a3b8;">one-liner · ceil(N/50) queries</span>
+            </div>
+            <pre style="flex:none; font-size:10.5px; padding:8px 12px;"><span class="cmt"># application.properties — global batch fetch</span>
+<span class="prop">spring.jpa.properties.hibernate.default_batch_fetch_size</span>=<span class="num">50</span>
+
+<span class="cmt">// Replaces N queries with batched IN clauses:</span>
+<span class="cmt">// SELECT * FROM order_items WHERE order_id IN (1,2,...,50)</span></pre>
+          </div>
+
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+              <span class="pill pill-blue">C — JOIN FETCH JPQL</span>
+              <span style="font-size:11px; color:#94a3b8;">1 JOIN query · explicit control</span>
+            </div>
+            <pre style="flex:none; font-size:10.5px; padding:8px 12px;"><span class="ann">@Query</span>(<span class="str">"SELECT DISTINCT o FROM OrderEntity o "</span> +
+       <span class="str">"LEFT JOIN FETCH o.items "</span> +
+       <span class="str">"WHERE o.customerId = :id ORDER BY o.createdAt DESC"</span>)
+<span class="cls">List</span>&lt;<span class="cls">OrderEntity</span>&gt; findByCustomerIdWithItems(<span class="ann">@Param</span>(<span class="str">"id"</span>) <span class="cls">Long</span> id);</pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- ── Navigation ──────────────────────────────────────────────────── -->
+<div class="nav">
+  <button id="btnPrev" onclick="go(-1)" disabled>← Prev</button>
+  <div class="dot-row" id="dots"></div>
+  <button id="btnNext" onclick="go(1)">Next →</button>
+  <span class="counter" id="counter">1 / 7</span>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dots   = document.getElementById('dots');
+  let cur = 0;
+
+  // build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dots.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add('exit');
+    setTimeout(() => slides[cur].classList.remove('exit'), 400);
+    cur = n;
+    slides[cur].classList.add('active');
+    document.querySelectorAll('.dot').forEach((d, i) =>
+      d.classList.toggle('active', i === cur));
+    document.getElementById('counter').textContent = `${cur + 1} / ${slides.length}`;
+    document.getElementById('btnPrev').disabled = cur === 0;
+    document.getElementById('btnNext').disabled = cur === slides.length - 1;
+  }
+
+  function go(dir) { goTo(Math.max(0, Math.min(slides.length - 1, cur + dir))); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+  });
+</script>
+</body>
+</html>

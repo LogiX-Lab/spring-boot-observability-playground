@@ -88,7 +88,7 @@ export default function ShopPage() {
                 .getElementById("products")
                 ?.scrollIntoView({ behavior: "smooth" })
             }
-            className="mt-8 h-12 px-8 border border-on-dark text-on-dark text-[10px] tracking-[0.25em] uppercase font-bold hover:bg-on-dark hover:text-canvas transition-colors"
+            className="mt-8 h-12 px-8 bg-accent text-white text-[10px] tracking-[0.25em] uppercase font-bold rounded-full hover:bg-accent-hover transition-colors"
           >
             SHOP NOW
           </button>
@@ -108,11 +108,9 @@ export default function ShopPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-hairline border border-hairline">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {PRODUCTS.map((product) => (
-            <div key={product.id} className="bg-canvas">
-              <ProductCard product={product} onAdd={handleAdd} />
-            </div>
+            <ProductCard key={product.id} product={product} onAdd={handleAdd} />
           ))}
         </div>
       </main>

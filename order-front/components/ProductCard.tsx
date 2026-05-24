@@ -18,9 +18,9 @@ const CATEGORY_SYMBOL: Record<string, string> = {
 
 export function ProductCard({ product, onAdd }: ProductCardProps) {
   return (
-    <article className="bg-surface-card flex flex-col h-full">
+    <article className="bg-surface-card flex flex-col h-full rounded-2xl overflow-hidden shadow-sm border border-hairline">
       {/* Image area */}
-      <div className="relative bg-surface-soft aspect-[4/3] flex items-center justify-center border-b border-hairline select-none overflow-hidden">
+      <div className="relative bg-surface-soft aspect-[4/3] flex items-center justify-center select-none overflow-hidden">
         <span className="text-[5rem] text-muted leading-none opacity-40">
           {CATEGORY_SYMBOL[product.category] ?? "◈"}
         </span>
@@ -47,7 +47,7 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
           </span>
           <button
             onClick={() => onAdd(product)}
-            className="h-9 px-5 border border-on-dark text-on-dark text-[10px] tracking-[0.2em] uppercase font-bold hover:bg-on-dark hover:text-canvas transition-colors"
+            className="h-9 px-5 bg-accent text-white text-[10px] tracking-[0.2em] uppercase font-bold rounded-full hover:bg-accent-hover transition-colors"
           >
             ADD
           </button>

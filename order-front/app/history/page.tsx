@@ -4,9 +4,6 @@ import { useState, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { MStripe } from "@/components/MStripe";
 
-const ORDER_API =
-  process.env.NEXT_PUBLIC_ORDER_API ?? "http://localhost:8081";
-
 interface OrderItem {
   productId: number;
   quantity: number;
@@ -46,8 +43,8 @@ export default function HistoryPage() {
       setErrorMsg("");
 
       const url = customerIdInput.trim()
-        ? `${ORDER_API}/api/v1/order?customerId=${customerIdInput.trim()}`
-        : `${ORDER_API}/api/v1/order`;
+        ? `/api/orders?customerId=${customerIdInput.trim()}`
+        : `/api/orders`;
 
       try {
         const res = await fetch(url);
@@ -97,13 +94,13 @@ export default function HistoryPage() {
               value={customerIdInput}
               onChange={(e) => setCustomerIdInput(e.target.value)}
               placeholder="Leave blank for all orders"
-              className="w-full h-12 bg-surface-card border border-hairline text-body-strong text-sm font-light px-3 focus:border-on-dark focus:outline-none transition-colors placeholder:text-muted"
+              className="w-full h-12 bg-surface-card border border-hairline text-body-strong text-sm font-light px-4 rounded-xl focus:border-accent focus:outline-none transition-colors placeholder:text-muted"
             />
           </div>
           <button
             type="submit"
             disabled={fetchState === "loading"}
-            className="h-12 px-8 border border-on-dark text-on-dark text-[10px] tracking-[0.25em] uppercase font-bold hover:bg-on-dark hover:text-canvas transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-12 px-8 bg-accent text-white text-[10px] tracking-[0.25em] uppercase font-bold rounded-full hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {fetchState === "loading" ? "LOADING…" : "SEARCH"}
           </button>

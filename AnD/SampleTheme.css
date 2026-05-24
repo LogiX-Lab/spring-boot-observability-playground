@@ -1,0 +1,39 @@
+:root {
+  --color-primary: #FF5E5B;
+  --color-secondary: #29B6F6;
+  --color-text-main: #212121;
+  --color-text-muted: #607D8B;
+  --color-bg-page: #F8FAFC;
+  --color-bg-card: #FFFFFF;
+  
+  --radius-card: 12px;
+  --radius-button: 9999px; /* Pill shape */
+  --font-main: 'Inter', sans-serif;
+}
+
+body {
+  background-color: var(--color-bg-page);
+  color: var(--color-text-main);
+  font-family: var(--font-main);
+}
+
+.product-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  transition: transform 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border-radius: var(--radius-button);
+  font-weight: 600;
+  padding: 10px 24px;
+  border: none;
+}
