@@ -266,31 +266,50 @@
     <h2>Application Demo</h2>
     <p class="subtitle">Live order placement and order history views running on the playground stack</p>
 
-    <div style="display:flex; gap:20px; flex:1; min-height:0;">
-      <div style="flex:1; display:flex; flex-direction:column; gap:10px; min-height:0;">
-        <div style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#4f46e5;">
-          Order Placement
+    <div style="display:flex; gap:16px; flex:1; min-height:0;">
+
+      <!-- Main: System Architecture from Jaeger -->
+      <div style="flex:1.8; min-height:0; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#ea580c;">
+          System Architecture — Jaeger
         </div>
         <div style="flex:1; min-height:0; display:flex; align-items:center; justify-content:center;">
           <img
-            src="Demo Order Placement.png"
-            alt="Demo Order Placement UI"
+            src="System Architecture View from Jaeger.png"
+            alt="System architecture view from Jaeger"
             style="max-width:100%; max-height:100%; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 4px 16px rgba(0,0,0,0.10); object-fit:contain;"
           />
         </div>
       </div>
-      <div style="flex:1; display:flex; flex-direction:column; gap:10px; min-height:0;">
-        <div style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#15803d;">
-          Order History
+
+      <!-- Compact: two app UI screenshots -->
+      <div style="flex:1; min-height:0; display:flex; flex-direction:column; gap:12px;">
+        <div style="flex:1; min-height:0; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#4f46e5;">
+            Order Placement
+          </div>
+          <div style="flex:1; min-height:0; display:flex; align-items:center; justify-content:center;">
+            <img
+              src="Demo Order Placement.png"
+              alt="Demo Order Placement UI"
+              style="max-width:100%; max-height:100%; border-radius:10px; border:1px solid #e2e8f0; box-shadow:0 2px 10px rgba(0,0,0,0.08); object-fit:contain;"
+            />
+          </div>
         </div>
-        <div style="flex:1; min-height:0; display:flex; align-items:center; justify-content:center;">
-          <img
-            src="Order History.png"
-            alt="Order History UI"
-            style="max-width:100%; max-height:100%; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 4px 16px rgba(0,0,0,0.10); object-fit:contain;"
-          />
+        <div style="flex:1; min-height:0; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#15803d;">
+            Order History
+          </div>
+          <div style="flex:1; min-height:0; display:flex; align-items:center; justify-content:center;">
+            <img
+              src="Order History.png"
+              alt="Order History UI"
+              style="max-width:100%; max-height:100%; border-radius:10px; border:1px solid #e2e8f0; box-shadow:0 2px 10px rgba(0,0,0,0.08); object-fit:contain;"
+            />
+          </div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -742,9 +761,89 @@ sdk.start();</pre>
   </div>
 
   <!-- ══════════════════════════════════════════════════════════════════
-       SLIDE 6 — N+1 PROBLEM
+       SLIDE 6 — N+1 PROBLEM (DIAGRAM + SQL SCREENSHOT)
   ══════════════════════════════════════════════════════════════════════ -->
   <div class="slide" id="s6">
+    <div class="slide-tag">JPA Performance</div>
+    <h2>Spring Entity N+1 Problem</h2>
+    <p class="subtitle">FetchType.EAGER on OrderItem triggers N extra JDBC round-trips — visible in Jaeger traces</p>
+
+    <div class="row" style="gap:16px;">
+
+      <!-- Left: N+1 diagram + SQL screenshot -->
+      <div class="col" style="flex:1.6; gap:10px;">
+
+        <!-- Compact N+1 box diagram -->
+        <svg viewBox="0 0 680 202" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;flex-shrink:0;">
+          <defs>
+            <marker id="n1a" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+              <polygon points="0 0, 8 3.5, 0 7" fill="#64748b"/>
+            </marker>
+          </defs>
+          <text x="10" y="12" font-family="ui-monospace,Consolas,monospace" font-size="10" fill="#94a3b8" font-weight="600">Data Model  (1 : N)</text>
+          <rect x="10" y="18" width="70" height="34" rx="5" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="45" y="31" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" font-weight="700" fill="#1d4ed8">Order</text>
+          <text x="45" y="44" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="9" fill="#3b82f6">1 row</text>
+          <line x1="81" y1="35" x2="104" y2="35" stroke="#64748b" stroke-width="1.5" marker-end="url(#n1a)"/>
+          <text x="92" y="30" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="9" fill="#64748b">1:N</text>
+          <rect x="106" y="18" width="72" height="34" rx="5" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+          <text x="142" y="31" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" font-weight="700" fill="#15803d">OrderItem</text>
+          <text x="142" y="44" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="9" fill="#16a34a">#1</text>
+          <rect x="182" y="18" width="72" height="34" rx="5" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+          <text x="218" y="31" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" font-weight="700" fill="#15803d">OrderItem</text>
+          <text x="218" y="44" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="9" fill="#16a34a">#2</text>
+          <rect x="258" y="18" width="72" height="34" rx="5" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+          <text x="294" y="31" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" font-weight="700" fill="#15803d">OrderItem</text>
+          <text x="294" y="44" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="9" fill="#16a34a">#3</text>
+          <rect x="334" y="18" width="72" height="34" rx="5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="370" y="37" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="12" fill="#64748b">… N</text>
+          <line x1="10" y1="62" x2="670" y2="62" stroke="#e2e8f0" stroke-width="1"/>
+          <text x="10" y="74" font-family="ui-monospace,Consolas,monospace" font-size="10" fill="#94a3b8" font-weight="600">Query Execution  (N+1 Pattern)</text>
+          <text x="10" y="86" font-family="ui-monospace,Consolas,monospace" font-size="10" font-weight="700" fill="#15803d">① 1 Query</text>
+          <rect x="10" y="91" width="252" height="34" rx="5" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+          <text x="136" y="104" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" fill="#14532d">SELECT * FROM orders</text>
+          <text x="136" y="117" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="9" fill="#166534">WHERE customer_id = ?  →  N rows</text>
+          <line x1="263" y1="108" x2="278" y2="108" stroke="#64748b" stroke-width="1.5" marker-end="url(#n1a)"/>
+          <rect x="280" y="91" width="56" height="34" rx="5" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="308" y="104" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" fill="#1d4ed8">Order</text>
+          <text x="308" y="117" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" font-weight="700" fill="#1e40af">#1</text>
+          <rect x="340" y="91" width="56" height="34" rx="5" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="368" y="104" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" fill="#1d4ed8">Order</text>
+          <text x="368" y="117" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" font-weight="700" fill="#1e40af">#2</text>
+          <rect x="400" y="91" width="56" height="34" rx="5" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="428" y="104" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" fill="#1d4ed8">Order</text>
+          <text x="428" y="117" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="10" font-weight="700" fill="#1e40af">#3</text>
+          <rect x="460" y="91" width="56" height="34" rx="5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="488" y="110" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="12" fill="#64748b">… N</text>
+          <line x1="308" y1="126" x2="308" y2="140" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="4,3"/>
+          <line x1="368" y1="126" x2="368" y2="140" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="4,3"/>
+          <line x1="428" y1="126" x2="428" y2="140" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="4,3"/>
+          <line x1="488" y1="126" x2="488" y2="140" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="4,3"/>
+          <text x="10" y="152" font-family="ui-monospace,Consolas,monospace" font-size="10" font-weight="700" fill="#dc2626">② N Queries — EAGER fetch fires one SELECT per Order:</text>
+          <rect x="10" y="156" width="660" height="20" rx="4" fill="#fff7ed" stroke="#fdba74" stroke-width="1.2"/>
+          <text x="20" y="170" font-family="ui-monospace,Consolas,monospace" font-size="9.5" fill="#92400e">SELECT * FROM order_items WHERE order_id = 1  |  order_id = 2  |  …  (repeated N times)</text>
+          <rect x="478" y="180" width="192" height="18" rx="4" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.2"/>
+          <text x="574" y="193" text-anchor="middle" font-family="ui-monospace,Consolas,monospace" font-size="9.5" font-weight="700" fill="#dc2626">Total = 1 + N database round-trips</text>
+        </svg>
+
+        <!-- Spring SQL N+1 Problem screenshot 
+        <div style="flex:1; min-height:0; display:flex; align-items:center; justify-content:center;">
+          <img src="Spring SQL N+1 Problem.png"
+               alt="Spring SQL N+1 queries captured"
+               style="max-width:100%; max-height:100%; border-radius:10px; border:1px solid #e2e8f0;
+                      box-shadow:0 4px 12px rgba(0,0,0,0.08);" />
+        </div>
+        -->
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SLIDE 7 — N+1 ANALYSIS
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s7">
     <div class="slide-tag">JPA Performance</div>
     <h2>Spring Entity N+1 Problem</h2>
     <p class="subtitle">Order ↔ OrderItem — as found in this project</p>
@@ -833,7 +932,7 @@ fetch = <span class="cls">FetchType</span>.LAZY
   <button id="btnPrev" onclick="go(-1)" disabled>← Prev</button>
   <div class="dot-row" id="dots"></div>
   <button id="btnNext" onclick="go(1)">Next →</button>
-  <span class="counter" id="counter">1 / 7</span>
+  <span class="counter" id="counter">1 / 8</span>
 </div>
 
 <script>
